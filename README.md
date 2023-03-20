@@ -54,8 +54,7 @@ It would require the purchase of a domain name. Therefore, in this project, the 
 -------
 ### `POST` Create Short Link
 
-Create an Account for the authenticated User if an Account for that User does
-not already exist. Each User can only have one Account.
+Create an Short link based on nanoid and store  the  `id` and `destination` to dynamoDB.
 
 **URL** : `https://53kgr0gpw1.execute-api.us-east-1.amazonaws.com/beta/`
 
@@ -112,8 +111,7 @@ _Note: `shortlink` return shortlink from the architecture_v1 and `cdnShortLink` 
 -------
 ### `GET` Short Link Redirect (architecture_v1)
 
-Create an Account for the authenticated User if an Account for that User does
-not already exist. Each User can only have one Account.
+Retrive Shortlink by id from dynamoDB and redirect if short link id is found. 
 
 **URL** : `https://53kgr0gpw1.execute-api.us-east-1.amazonaws.com/beta/${id}`
 
