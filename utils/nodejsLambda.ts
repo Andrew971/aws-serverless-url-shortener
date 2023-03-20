@@ -50,7 +50,7 @@ export function getPath<P extends any>(event: APIGatewayProxyEvent): P | undefin
   }
 
 }
-const ErrorCode = [404]
+
 export function httpResponse<responseType>(statusCode: number, response: responseType) : APIGatewayProxyResult {
     console.log('statusCode', statusCode)
     console.log('response', response)
@@ -62,6 +62,20 @@ export function httpResponse<responseType>(statusCode: number, response: respons
         },
         statusCode: statusCode,
         body: JSON.stringify(response)
+    }
+}
+export function httpHTMLResponse(statusCode: number, response: string) : APIGatewayProxyResult {
+    console.log('statusCode', statusCode)
+    console.log('response', response)
+
+    return {
+        headers: {
+            'Content-Type': 'text/html',
+            "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS 
+        },
+        statusCode: statusCode,
+        body: response
     }
 }
 export function HttpRedirect(Location: string) : APIGatewayProxyResult {

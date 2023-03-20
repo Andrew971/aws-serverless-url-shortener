@@ -1,6 +1,7 @@
 import { APIGatewayProxyResult } from 'aws-lambda';
-import { GetEvent, HttpRedirect, getPath, httpResponse } from '../../../utils/nodejsLambda';
+import { GetEvent, HttpRedirect, getPath, httpHTMLResponse, httpResponse } from '../../../utils/nodejsLambda';
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { NotFoundPage } from './404'
 import {
   DynamoDBDocumentClient,
   QueryCommandInput,
@@ -58,7 +59,7 @@ export async function handler(event: GetEvent<RequestParam>): Promise<APIGateway
 
     const results: QueryCommandOutput = await ddbDocClient.send(new QueryCommand(params));
 
-    if ((results.Count || 0) === 0 || !results.Items) throw new Error('ShortID already exist, try again')
+    if ((results.Count || 0) === 0 || !results.Items) return httpHTMLResponse(404, NotFoundPage)
 
     const item = results.Items[0]
     return HttpRedirect(item.destination)

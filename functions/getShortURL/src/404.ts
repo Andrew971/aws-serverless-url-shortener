@@ -1,3 +1,5 @@
+
+export const NotFoundPage = `
 <!DOCTYPE html>
 <html lang="en">
 
@@ -211,7 +213,7 @@
 
   .clearfix:before,
   .clearfix:after {
-    content: "\0020";
+    content: " ";
     display: block;
     height: 0;
     visibility: hidden;
@@ -672,9 +674,9 @@
   </section>
 
 </a>
-
-
-
 </body>
 
 </html>
+`;
+
+ 
