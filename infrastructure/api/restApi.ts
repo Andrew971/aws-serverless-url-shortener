@@ -13,6 +13,7 @@ import {
 import { Alias } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction, NodejsFunctionProps } from "aws-cdk-lib/aws-lambda-nodejs";
 import postLinkConfig from "../../functions/postLink/config"
+import postRequestAuthorizerConfig from "../../functions/postRequestAuthorizer/config"
 import getShortURLConfig from "../../functions/getShortURL/config"
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 import { LogGroup } from "aws-cdk-lib/aws-logs";
@@ -85,7 +86,9 @@ export default (stack: Stack, { restApiName, description, resources }: ApiProps)
 
   const rootResource = api.root
   const shortenedURLResource = rootResource.addResource('{id}');
-
+  const authorizer = getLambdaRequestAuthorizer(stack, postRequestAuthorizerConfig({
+    defaultStage: api.deploymentStage,
+  }))
 
   const postLink = getLambdaProxyIntegration(stack, postLinkConfig({
     defaultStage: api.deploymentStage, environment: {
@@ -100,7 +103,12 @@ export default (stack: Stack, { restApiName, description, resources }: ApiProps)
     }
   }))
 
-  const postLinkMethod = rootResource.addMethod("POST", postLink.integration)
+
+
+  const postLinkMethod = rootResource.addMethod("POST", postLink.integration, {
+    authorizer: authorizer.requestAuthorizer,
+    authorizationType: AuthorizationType.CUSTOM
+  })
 
   resources.database.ShortLinkTable.grantReadWriteData(postLink.alias)
   postLinkMethod.metricLatency(api.deploymentStage);
@@ -136,8 +144,18 @@ function getLambdaProxyIntegration(stack: Stack, config: ILambdaProxyIntegration
   return { integration, function: lambdaHandler, alias: lambdaAlias }
 }
 function getLambdaRequestAuthorizer(stack: Stack, config: ILambdaRequestAuthorizer) {
-  const { lambda, auhtorizerConfig } = config
+  const { lambda, defaultAlias, deploymentConfig, auhtorizerConfig } = config
   const lambdaHandler = new NodejsFunction(stack, `${lambda.functionName}`, lambda)
+  // const lambdaAlias = new Alias(stack, `${defaultAlias.split('-')[0]}Alias`, {
+  //   aliasName: defaultAlias,
+  //   version: lambdaHandler.currentVersion,
+  // })
+
+  // new LambdaDeploymentGroup(stack, `${lambda.functionName}-DeploymentGroup`, {
+  //   alias: lambdaAlias,
+  //   deploymentConfig: deploymentConfig,
+  // });
+
   lambdaHandler.applyRemovalPolicy(RemovalPolicy.RETAIN)
 
   const requestAuthorizer = new RequestAuthorizer(stack, `${lambda.functionName}-Authorizer`, {
