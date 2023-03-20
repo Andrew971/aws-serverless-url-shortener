@@ -17,6 +17,7 @@ import getShortURLConfig from "../../functions/getShortURL/config"
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 import { LogGroup } from "aws-cdk-lib/aws-logs";
 import { ILambdaDeploymentConfig, LambdaDeploymentGroup } from "aws-cdk-lib/aws-codedeploy";
+import { Distribution } from "aws-cdk-lib/aws-cloudfront";
 
 export interface ILambdaProxyIntegration {
   lambda: NodejsFunctionProps,
@@ -35,6 +36,7 @@ interface ApiProps {
   restApiName: string
   description: string
   resources: {
+    distribution: Distribution
     database: {
       [key: string]: Table
     }
@@ -88,6 +90,7 @@ export default (stack: Stack, { restApiName, description, resources }: ApiProps)
   const postLink = getLambdaProxyIntegration(stack, postLinkConfig({
     defaultStage: api.deploymentStage, environment: {
       LINK_TABLE: resources.database.ShortLinkTable.tableName,
+      CF_DOMAIN_NAME: resources.distribution.domainName
     },
 
   }))
@@ -96,8 +99,6 @@ export default (stack: Stack, { restApiName, description, resources }: ApiProps)
       LINK_TABLE: resources.database.ShortLinkTable.tableName
     }
   }))
-
-
 
   const postLinkMethod = rootResource.addMethod("POST", postLink.integration)
 
@@ -135,18 +136,8 @@ function getLambdaProxyIntegration(stack: Stack, config: ILambdaProxyIntegration
   return { integration, function: lambdaHandler, alias: lambdaAlias }
 }
 function getLambdaRequestAuthorizer(stack: Stack, config: ILambdaRequestAuthorizer) {
-  const { lambda, defaultAlias, deploymentConfig, auhtorizerConfig } = config
+  const { lambda, auhtorizerConfig } = config
   const lambdaHandler = new NodejsFunction(stack, `${lambda.functionName}`, lambda)
-  // const lambdaAlias = new Alias(stack, `${defaultAlias.split('-')[0]}Alias`, {
-  //   aliasName: defaultAlias,
-  //   version: lambdaHandler.currentVersion,
-  // })
-
-  // new LambdaDeploymentGroup(stack, `${lambda.functionName}-DeploymentGroup`, {
-  //   alias: lambdaAlias,
-  //   deploymentConfig: deploymentConfig,
-  // });
-
   lambdaHandler.applyRemovalPolicy(RemovalPolicy.RETAIN)
 
   const requestAuthorizer = new RequestAuthorizer(stack, `${lambda.functionName}-Authorizer`, {
